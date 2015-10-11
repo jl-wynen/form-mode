@@ -365,8 +365,8 @@ in  an id-statement."
           ;; return nil for closed lines
 
           (if (re-search-backward "[=:]" (line-beginning-position) t)
-              (+ 2 (current-column))              
-            (+ (current-indentation) form-basic-offset)
+              (current-column)  ; return pos of = of :
+            (current-indentation)  ; return indentation of prev line
             )
           )
         )
@@ -425,26 +425,25 @@ in  an id-statement."
         (unless cur-indent  ; previous line is closed
           (if (looking-at "^[ \t]*\\*") ; cur line is comment or empty
               (setq cur-indent 0)
-            (progn
-              (setq cur-indent (form-block-indent))
-              (when (re-search-forward
-                     (eval-when-compile
-                       (concat
-                        "\\("
-                        (regexp-opt
-                         '("endif" "enddo" "endwhile" "endrepeat" "endargument"
-                           "endinexpression" "endinside" "endterm"
-                           "else" "elseif" "#case" "#else" "#elseif")
-                         t)
-                        "\\|"
-                        "#end[a-zA-Z]*"
-                        "\\)"
-                        )
-                       )
-                     (line-end-position) t)
-                ;; then
-                (setq cur-indent (- cur-indent form-basic-offset))
-                )
+            
+            (setq cur-indent (form-block-indent))
+            (when (re-search-forward
+                   (eval-when-compile
+                     (concat
+                      "\\("
+                      (regexp-opt
+                       '("endif" "enddo" "endwhile" "endrepeat" "endargument"
+                         "endinexpression" "endinside" "endterm"
+                         "else" "elseif" "#case" "#else" "#elseif")
+                       t)
+                      "\\|"
+                      "#end[a-zA-Z]*"
+                      "\\)"
+                      )
+                     )
+                   (line-end-position) t)
+              ;; then
+              (setq cur-indent (- cur-indent form-basic-offset))
               )
             )
           )
