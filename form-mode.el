@@ -681,6 +681,7 @@ All modified lines are reindented afterwards using form-indent-line."
        :error-patterns
        ((error line-start (file-name) " Line " line " --> " (message) line-end)
         (error line-start (file-name) " Line " line " ==> " (message) line-end)
+        (error line-start "Input file without a program." line-end)
         (warning line-start " --> Warning: " (message) line-end)
         )
        :modes form-mode
