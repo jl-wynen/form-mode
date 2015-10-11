@@ -353,6 +353,7 @@ in  an id-statement."
 
 (defun form-prev-line-indent ()
   "Return the level of indentation of the current line if the previous line is not closed or nil otherwise."
+  (beginning-of-line)
   (if (bobp) 0
     (save-excursion
       (forward-line -1)
@@ -416,11 +417,11 @@ in  an id-statement."
   (let ((cur-indent))
     (save-excursion
       (beginning-of-line)
-
+      
       (if (bobp)   ; beginning of buffer
           (setq cur-indent 0)
         
-        (setq cur-indent  (form-prev-line-indent))        
+        (setq cur-indent  (form-prev-line-indent))
         (unless cur-indent  ; previous line is closed
           (if (looking-at "^[ \t]*\\*") ; cur line is comment or empty
               (setq cur-indent 0)
