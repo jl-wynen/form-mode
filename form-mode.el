@@ -79,12 +79,11 @@
 (defconst form-syntax-module-keywords
   (eval-when-compile
     (regexp-opt '(".end" ".sort" ".store" ".global" ".clear") t ))
-  "Regex for FORM module keywords."
+  "Regexp for FORM module keywords."
   )
 
 (defconst form-keywords
-  (eval-when-compile  
-    '("argument" "do" "else" "elseif ""if" "inexpression" "inside" "repeat" "term" "while"))
+    '("argument" "do" "else" "elseif" "if" "inexpression" "inside" "repeat" "term" "while")
   "Keywords of FORM language."
   )
 
@@ -93,8 +92,9 @@
     ; combine keywords and the corresponding end... keywords
     (regexp-opt (append
                  form-keywords
-                 (mapcar (lambda (str) (concat "end" str)) form-keywords) )
-                t ))  ;; TODO: no mapping of end, see elseif
+                 (mapcar (lambda (str) (concat "end" str))
+                         '("argument" "do" "if" "inexpression" "inside" "repeat" "term" "while")))
+                t ))
   "Regex for FORM keywords."
   )
 
@@ -177,8 +177,7 @@ is used by the syntax highlighter, do not use it for anything else!")
 
 ;;          TODO
 ;; multiline
-;; preprocessor strings
-;; use of builtin sets overwrites wildcard colouring
+;; preprocessor strings?
 
 (defun form-search-for-wildcard (limit)
   "Search for a wildcard expression in an id-statement and store the wildcard
@@ -276,8 +275,7 @@ in  an id-statement."
   )
 
 (defconst form-font-lock-keywords-2
-  (append form-font-lock-keywords-1
-          (list 
+  (append (list 
            ;; functions
            `(,(concat
                "\\<"
@@ -291,25 +289,24 @@ in  an id-statement."
                       "\\)\\>") 1 font-lock-builtin-face)
 
            ;; colour type and variable name in definition (without =)
-           ;; TODO: treat index ranges correctly (whitespaces)
            `(,(concat
                "^[ \t]*"
                form-syntax-type-names
                "\\>") (0 font-lock-type-face)
 
-               (",?[ \t]*<??\\([a-zA-Z][a-zA-Z0-9]*\\|\\[[^]]+]\\)>??\\([ \t,;]\\|([a-zA-Z0-9:+\\-0]*)\\|#[RCI]\\|[ \t]*=[ \t]*[a-zA-Z0-9]+[ \t]*:[ \t]*[a-zA-Z0-9]+\\)"
+               (",?[ \t]*<??\\([a-zA-Z][a-zA-Z0-9]*\\|\\[[^]]+]\\)>??\\([ \t,;]\\|([a-zA-Z0-9:+\\-0 \t]*)\\|#[RCI]\\|[ \t]*=[ \t]*[a-zA-Z0-9]+[ \t]*:[ \t]*[a-zA-Z0-9]+\\)"
                 nil nil (1 font-lock-variable-name-face))
                )
            ;; TODO: add others?
            `("^AutoDeclare\\>" (0 font-lock-function-name-face)
              (,(concat
-               "\\<"
-               form-syntax-type-names
-               "\\>") nil nil (0 font-lock-type-face))
+                "\\<"
+                form-syntax-type-names
+                "\\>") nil nil (0 font-lock-type-face))
 
-               (",?[ \t]*\\([a-zA-Z][a-zA-Z0-9]*\\|\\[[^]]+]\\)\\([ \t,;]\\|([a-zA-Z0-9:+\\-0]*)\\|#[RCI]\\|[ \t]*=[ \t]*[a-zA-Z0-9]+[ \t]*:[ \t]*[a-zA-Z0-9]+\\)"
-                nil nil (1 font-lock-variable-name-face))
-               )
+             (",?[ \t]*\\([a-zA-Z][a-zA-Z0-9]*\\|\\[[^]]+]\\)\\([ \t,;]\\|([a-zA-Z0-9:+\\-0]*)\\|#[RCI]\\|[ \t]*=[ \t]*[a-zA-Z0-9]+[ \t]*:[ \t]*[a-zA-Z0-9]+\\)"
+              nil nil (1 font-lock-variable-name-face))
+             )
            
            ;; colour type and variable name in assignment (with =)
            `(,(concat
@@ -324,18 +321,19 @@ in  an id-statement."
            '("^[ \t]*\\(set\\)\\>" (1 font-lock-type-face)
              ("[ \t]+\\([a-zA-Z][a-zA-Z0-9]*\\|\\[[^]]+]\\)[ \t]*\\(;\\|:.+\\)" nil nil (1 font-lock-variable-name-face))
              )
-           ))
+           )
+          form-font-lock-keywords-1)
   "Additional keywords for font-locking in FORM-mode. Add special functions and variable definitions."
   )
 
 (defconst form-font-lock-keywords-3
-  (append form-font-lock-keywords-2
-          (list
+  (append (list
            ;; wildcards
            '(form-search-for-id-statement (1 font-lock-type-face)
                                           (form-search-for-wildcard nil (re-search-forward "[^=]*=" (line-end-position) t) (1 'font-lock-wildcard-face))
                                           (form-search-for-pattern nil nil (1 'font-lock-pattern-face)))
-   ))
+           )
+          form-font-lock-keywords-2)
   "Complete keywords for font-locking in FORM-mode including matching of wildcards."
   )
 
@@ -347,6 +345,14 @@ in  an id-statement."
 ;;; -----------------
 ;;;    Indentation
 ;;; -----------------
+
+;; TODO
+;; - add detection of if(...
+;;                       ...); etc
+;; - do not expect ; in preprocessor blocks:
+;;        #if true
+;;           1
+;;        #endif
 
 (defvar form-basic-offset 2
   "Depth of one indentation step")
@@ -658,6 +664,7 @@ All modified lines are reindented afterwards using form-indent-line."
       (cache))
     )
   )
+
 
 
 ;;; -----------------------
